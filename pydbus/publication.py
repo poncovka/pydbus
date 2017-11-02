@@ -37,6 +37,6 @@ class Publication(ExitableWithAliases("unpublish")):
 class PublicationMixin(object):
 	__slots__ = ()
 
-	def publish(self, bus_name, *objects):
+	def publish(self, bus_name, *objects, **kwargs):
 		"""Expose objects on the bus."""
-		return Publication(self, bus_name, *objects)
+		return Publication(self, bus_name, *objects, **kwargs)

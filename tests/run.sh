@@ -18,4 +18,8 @@ then
 	"$PYTHON" $TESTS_DIR/publish_multiface.py
 	"$PYTHON" $TESTS_DIR/publish_async.py
 	"$PYTHON" $TESTS_DIR/publish_error.py
+	# service replacement test START
+	"$PYTHON" $TESTS_DIR/publish_replacable.py &
+	"$PYTHON" $TESTS_DIR/publish_replace.py
+	# service replacement test END
 fi
