@@ -84,7 +84,8 @@ All objects have methods, properties and signals.
 Setting up an event loop
 ========================
 
-To handle signals emitted by exported objects, or to export your own objects, you need to setup an event loop.
+To handle signals emitted by exported objects, to asynchronously call methods
+or to export your own objects, you need to setup an event loop.
 
 The only main loop supported by ``pydbus`` is GLib.MainLoop.
 
@@ -155,6 +156,14 @@ To see the API of a specific proxy object, use help()::
 To call a method::
 
     dev.Disconnect()
+
+To asynchronously call a method::
+
+    def print_result(returned=None, error=None):
+        print(returned, error)
+
+    dev.GetAppliedConnection(0, callback=print_result)
+    loop.run()
 
 To read a property::
 
@@ -329,6 +338,53 @@ over the process of binding a name and exporting single objects.
 
 In this case, you can use ``bus.request_name()`` and ``bus.register_object()`` yourself.
 See ``help(bus.request_name)`` and ``help(bus.register_object)`` for details.
+
+.. --------------------------------------------------------------------
+
+Error handling
+==============
+
+You can map D-Bus errors to your exception classes for better error handling.
+To handle D-Bus errors, use the ``@map_error`` decorator::
+
+    from pydbus.error import map_error
+
+    @map_error("org.freedesktop.DBus.Error.InvalidArgs")
+    class InvalidArgsException(Exception):
+        pass
+
+    try:
+        ...
+    catch InvalidArgsException as e:
+        print(e)
+
+To register new D-Bus errors, use the ``@register_error`` decorator::
+
+    from pydbus.error import register_error
+
+    @map_error("net.lew21.pydbus.TutorialExample.MyError", MY_DOMAIN, MY_EXCEPTION_CODE)
+    class MyException(Exception):
+        pass
+
+Then you can raise ``MyException`` from the D-Bus method of the remote object::
+
+    def Method():
+        raise MyException("Message")
+
+And catch the same exception on the client side::
+
+    try:
+        proxy.Method()
+    catch MyException as e:
+        print(e)
+
+To handle all unknown D-Bus errors, use the ``@map_by_default`` decorator to specify the default exception::
+
+    from pydbus.error import map_by_default
+
+    @map_by_default
+    class DefaultException(Exception):
+        pass
 
 .. --------------------------------------------------------------------
 
