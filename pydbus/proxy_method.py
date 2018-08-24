@@ -66,19 +66,27 @@ class ProxyMethod(object):
 
 		# Python 2 sux
 		for kwarg in kwargs:
-			if kwarg not in ("timeout", "callback", "callback_args", "unpack_result"):
+			if kwarg not in ("timeout", "callback", "callback_args", "unpack_result", "pack_args"):
 				raise TypeError(self.__qualname__ + " got an unexpected keyword argument '{}'".format(kwarg))
 		timeout = kwargs.get("timeout", None)
 		callback = kwargs.get("callback", None)
 		callback_args = kwargs.get("callback_args", tuple())
 		unpack_result = kwargs.get("unpack_result", True)
+		pack_args = kwargs.get("pack_args", True)
+
+		if pack_args:
+			sinargs_variant = GLib.Variant(self._sinargs, args)
+		elif not args:
+			sinargs_variant = None
+		else:
+			sinargs_variant = args[0]
 
 		call_args = (
 			instance._bus_name,
 			instance._path,
 			self._iface_name,
 			self.__name__,
-			GLib.Variant(self._sinargs, args),
+			sinargs_variant,
 			GLib.VariantType.new(self._soutargs),
 			0,
 			timeout_to_glib(timeout),
