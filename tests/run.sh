@@ -18,6 +18,7 @@ then
 	"$PYTHON" $TESTS_DIR/publish_multiface.py
 	"$PYTHON" $TESTS_DIR/publish_async.py
 	"$PYTHON" $TESTS_DIR/publish_error.py
+	"$PYTHON" $TESTS_DIR/publish_unpacked.py
 	# service replacement test START
 	"$PYTHON" $TESTS_DIR/publish_replacable.py &
 	"$PYTHON" $TESTS_DIR/publish_replace.py

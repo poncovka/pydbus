@@ -66,11 +66,12 @@ class ProxyMethod(object):
 
 		# Python 2 sux
 		for kwarg in kwargs:
-			if kwarg not in ("timeout", "callback", "callback_args"):
+			if kwarg not in ("timeout", "callback", "callback_args", "unpack_result"):
 				raise TypeError(self.__qualname__ + " got an unexpected keyword argument '{}'".format(kwarg))
 		timeout = kwargs.get("timeout", None)
 		callback = kwargs.get("callback", None)
 		callback_args = kwargs.get("callback_args", tuple())
+		unpack_result = kwargs.get("unpack_result", True)
 
 		call_args = (
 			instance._bus_name,
@@ -85,7 +86,7 @@ class ProxyMethod(object):
 		)
 
 		if callback:
-			call_args += (self._finish_async_call, (callback, callback_args))
+			call_args += (self._finish_async_call, (callback, callback_args, unpack_result))
 			instance._bus.con.call(*call_args)
 			return None
 
@@ -101,7 +102,10 @@ class ProxyMethod(object):
 			if error:
 				raise error
 
-			return self._unpack_return(result)
+			if unpack_result:
+				result = self._unpack_return(result)
+
+			return result
 
 	def _unpack_return(self, values):
 		ret = values.unpack()
@@ -112,18 +116,21 @@ class ProxyMethod(object):
 		else:
 			return ret
 
-	def _finish_async_call(self, source, result, user_data):
+	def _finish_async_call(self, source, result_object, user_data):
 		error = None
-		return_args = None
+		result = None
+
+		callback, callback_args, unpack_result = user_data
 
 		try:
-			ret = source.call_finish(result)
-			return_args = self._unpack_return(ret)
+			result = source.call_finish(result_object)
 		except Exception as err:
 			error = error_registration.transform_exception(err)
 
-		callback, callback_args = user_data
-		callback(*callback_args, returned=return_args, error=error)
+		if not error and unpack_result:
+			result = self._unpack_return(result)
+
+		callback(*callback_args, returned=result, error=error)
 
 	def __get__(self, instance, owner):
 		if instance is None:
